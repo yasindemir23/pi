@@ -1,0 +1,134 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
+
+namespace program
+{
+    public partial class Form1 : Form
+    {
+
+        private List<play> playList;
+        private List<DateTime> datelist= new List<DateTime>();
+        private List<int> clientList = new List<int>();
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+
+        public List<string> loadCsvFile(string filePath)
+        {
+            var reader = new StreamReader(File.OpenRead(filePath));
+            List<string> searchList = new List<string>();
+            while (!reader.EndOfStream)
+            {
+                var line = reader.ReadLine();
+                searchList.Add(line);
+            }
+            return searchList;
+        }
+        private void button1_Click(object sender, System.EventArgs e)
+        {
+
+
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+
+            {
+                List<string> strList = loadCsvFile(openFileDialog1.FileName);
+                playList = new List<play>();
+
+                for (int i = 1; i < strList.Count(); i++)
+                {
+                    string[] array = strList[i].Split('\t');
+
+                    play p = new play();
+                    p.PlayID = array[0];
+                    p.SongID = int.Parse(array[1]);
+                    p.ClientID = int.Parse(array[2]);
+                    clientList.Add(int.Parse(array[2]));
+                    p.PlayTS = DateTime.Parse(array[3]);
+                    if(datelist.Where(d=>d.Day==p.PlayTS.Day && d.Month==p.PlayTS.Month && d.Year==p.PlayTS.Year).Count()==0)
+                    datelist.Add(DateTime.Parse(array[3]));
+                    p.PlayTS = DateTime.Parse(array[3]);
+                    playList.Add(p);
+                }
+                clientList = clientList.Distinct().ToList();
+
+            }
+
+
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            List<int> clientRes2 = new List<int>();
+            Parallel.ForEach(clientList, cid => {
+
+                int plist2 = playList.Where(p => p.ClientID == cid && p.PlayTS.Day == 10 && p.PlayTS.Month == 8 && p.PlayTS.Year == 2016).GroupBy(p => p.SongID).Count();
+                if (plist2 == 346)
+                {
+                 
+                    clientRes2.Add(cid);
+                }
+
+            });
+            foreach (var item in clientRes2)
+            {
+                listBox1.Items.Add(item);
+            }
+
+
+
+        }
+
+       
+        private void button3_Click(object sender, EventArgs e)
+        {
+            int max = 0;
+            for (int i = 0; i < datelist.Count(); i++)
+            {
+
+                int deger = playList.Where(p => p.PlayTS.Day == datelist[i].Day && p.PlayTS.Month == datelist[i].Month && p.PlayTS.Year == datelist[i].Year).GroupBy(p => p.SongID).Count();
+                max += deger;
+            }
+            textBox1.Text = max.ToString();
+        }
+        
+        
+        
+        }
+
+       
+    }
+
+
+    public class play
+    {
+        string playID;
+        int songID;
+        int clientID;
+        DateTime playTS;
+
+
+        public int SongID { get => songID; set => songID = value; }
+        public int ClientID { get => clientID; set => clientID = value; }
+        public DateTime PlayTS { get => playTS; set => playTS = value; }
+        public string PlayID { get => playID; set => playID = value; }
+    }
+
+
+
